@@ -6,9 +6,9 @@ on:
     branches:
       - develop
     paths:
-      - 'Dockerfile'
-      - 'gradle-app/**'
-      - '.github/workflows/**'
+      - 'Dockerfile'           # Should create new image if there is any change.
+      - 'gradle-app/**'        # Should create new image if there is change in code.
+      - '.github/workflows/**' # Optional: If we want to build image if there is any change in workflow.
 
 jobs:
   # Job 1: Build fat JAR, push Docker image, upload artifact
