@@ -43,11 +43,13 @@ jobs:
           ref: main
           token: ${{ secrets.REPO_TOKEN }}
 
-      - name: Update Helm chart Image Tag
+      - name: Update Helm chart Image Tag in dev-file and prod-file so that we have dev and prod in sync.
         run: |
           echo "Updating Helm chart in Argo repo..."
           sed -i "s|^\s*repository: .*|  repository: $IMAGE_REPO_NAME|" helm-chart/values-gradle.yaml
           sed -i "s|^\s*tag: .*|  tag: $IMAGE_TAG|" helm-chart/values-gradle.yaml
+          sed -i "s|^\s*repository: .*|  repository: $IMAGE_REPO_NAME|" helm-chart/values-gradle-dev.yaml
+          sed -i "s|^\s*tag: .*|  tag: $IMAGE_TAG|" helm-chart/values-gradle-dev.yaml
           echo "Updated Helm chart:"
           cat helm-chart/values-gradle.yaml
 
@@ -56,5 +58,5 @@ jobs:
         with:
           default_author: github_actor
           message: "Update deployment image to $IMAGE_TAG from develop"
-          add: 'helm-chart/values-gradle.yaml'
+          add: 'helm-chart/values-gradle.yaml helm-chart/values-gradle-dev.yaml'
           new_branch: main
