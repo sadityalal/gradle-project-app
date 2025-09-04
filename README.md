@@ -6,6 +6,7 @@ Whenever code is pushed, the pipeline automatically builds a Docker image, updat
 
 > **Best Practices:**  
 > Developers should push their changes only to the `develop` branch. After thorough code reviews and testing, approved changes are merged into the `main` branch, which triggers the deployment to the production environment. This ensures stability and maintains a clean release process.
+> In this project, I have kept Helm-charts and ArgoCD configuration in different repository then Application code to not to expose configuration to employee who doesnt need to know about this.
 
 
 ---
