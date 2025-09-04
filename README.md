@@ -189,8 +189,9 @@ spec:
 
 ## Deployment Flow Diagram
 
-flowchart TD
-  A [Developer Pushes to develop] --> B [Build & Test Application]
+```mermaid
+graph TD
+  A[Developer Pushes to develop] --> B[Build & Test Application]
   B --> C[Build Docker Image]
   C --> D[Push to Registry]
   D --> E[Update Helm Chart - develop branch]
@@ -201,6 +202,8 @@ flowchart TD
   I --> J[Update Helm Chart - main branch]
   J --> K[ArgoCD Syncs Prod Deployment]
   K --> L[Production Updated]
+```
+
  
 
 ## Quick Start
