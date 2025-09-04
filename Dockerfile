@@ -15,4 +15,3 @@ RUN useradd -u 10001 appuser
 USER 10001
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
-
