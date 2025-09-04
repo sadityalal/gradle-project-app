@@ -98,6 +98,8 @@ jobs:
           echo "Updating Helm chart..."
           sed -i "s|^\s*repository: .*|  repository: $IMAGE_REPO_NAME|" helm-chart/values-gradle-dev.yaml
           sed -i "s|^\s*tag: .*|  tag: $IMAGE_TAG|" helm-chart/values-gradle-dev.yaml
+          sed -i "s|^\s*repository: .*|  repository: $IMAGE_REPO_NAME|" helm-chart/values-gradle.yaml
+          sed -i "s|^\s*tag: .*|  tag: $IMAGE_TAG|" helm-chart/values-gradle.yaml
           echo "Updated Helm chart:"
           cat helm-chart/values-gradle-dev.yaml
 
@@ -108,5 +110,5 @@ jobs:
         with:
           default_author: github_actor
           message: "Update deployment image to ${{ env.IMAGE_TAG }}"
-          add: 'helm-chart/values-gradle-dev.yaml'
+          add: 'helm-chart/values-gradle-dev.yaml helm-chart/values-gradle.yaml'
           new_branch: develop
