@@ -101,7 +101,7 @@ jobs:
           echo "Updated Helm chart:"
           cat helm-chart/values-gradle-dev.yaml
 
-      # Step 3: Commit and push changes to develop branch
+      # Step 3: Commit and push changes to develop branch.
       # NOTE: Peer review must be completed before merging the changes to main branch.
       - name: Commit updated Helm chart
         uses: EndBug/add-and-commit@v9
