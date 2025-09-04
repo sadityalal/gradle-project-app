@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'Dockerfile'
+      - 'gradle-app/**'
+      - '.github/workflows/**'
 
 jobs:
   # Job 1: Fetch latest image tag from develop branch of Helm Charts Repo to remove manual interventions.

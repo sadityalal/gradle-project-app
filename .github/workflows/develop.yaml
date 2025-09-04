@@ -8,6 +8,7 @@ on:
     paths:
       - 'Dockerfile'
       - 'gradle-app/**'
+      - '.github/workflows/**'
 
 jobs:
   # Job 1: Build fat JAR, push Docker image, upload artifact
