@@ -223,8 +223,8 @@ git clone https://github.com/sadityalal/gradle-project-helm.git
 4. **Apply ArgoCD Application manifests:**
 
 ```bash
-kubectl apply -f helm-chart/argo-app-dev.yaml
-kubectl apply -f helm-chart/argo-app-prod.yaml
+kubectl apply -f argo-app-dev.yaml
+kubectl apply -f argo-app-prod.yaml
 ```
 
 - **Push code to `develop`** → ArgoCD automatically deploys to the dev environment.
