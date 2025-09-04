@@ -1,0 +1,118 @@
+name: Project-App CI/CD Pipeline
+
+# Trigger workflow on push to main branch, ignoring Helm chart changes
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'Dockerfile'
+      - 'gradle-app/**'
+      - '.github/workflows/**'
+
+jobs:
+  # Job 1: Build fat JAR, push Docker image, upload artifact
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REPO_NAME: ${{ secrets.IMAGE_REPO_NAME }}
+    outputs:
+      IMAGE_TAG: ${{ steps.set_tag.outputs.image_tag }}
+    steps:
+      # Step 1: Checkout repo
+      - name: Checkout source code
+        uses: actions/checkout@v5
+
+      # Step 2: Set up Java 17
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: temurin
+
+      # Step 3: Build fat JAR before Docker image creation to detect issues earlier rather then in Docker build step. (Optional)
+      - name: Compile and package the application
+        run: |
+          echo "Building the fat JAR..."
+          cd gradle-app
+          ./gradlew clean fatJar
+          echo "Build finished!"
+      
+      # Step 3b: Performing simple unit test
+      - name: Run unit tests
+        run: |
+          echo "Running unit tests..."
+          cd gradle-app
+          ./gradlew test
+
+      # Step 4: Set short commit SHA as image tag
+      - name: Set short commit SHA for image tag and extraction of Repository and user/organisation name
+        id: set_tag
+        run: |
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          echo "image_tag=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Using image tag: $SHORT_SHA"
+
+          REGISTRY=$(echo $IMAGE_REPO_NAME | cut -d'/' -f1)
+          USERNAME=$(echo $IMAGE_REPO_NAME | cut -d'/' -f2)
+          echo "REGISTRY=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "USERNAME=$USERNAME" >> $GITHUB_OUTPUT
+
+      # Step 5: Log in to GitHub Container Registry
+      - name: Authenticate with Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.set_tag.outputs.REGISTRY }}
+          username: ${{ steps.set_tag.outputs.USERNAME }}
+          password: ${{ secrets.REPO_TOKEN }}
+
+      # Step 6: Build Docker image
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image..."
+          docker build -t $IMAGE_REPO_NAME/projectapp:${{ steps.set_tag.outputs.image_tag }} .
+          echo "Docker image ready: $IMAGE_REPO_NAME/projectapp:${{ steps.set_tag.outputs.image_tag }}"
+
+      # Step 7: Push Docker image
+      - name: Push Docker image
+        run: |
+          echo "Pushing Docker image..."
+          docker push $IMAGE_REPO_NAME/projectapp:${{ steps.set_tag.outputs.image_tag }}
+          echo "Push completed!"
+
+  # Job 2: Update Helm chart
+  update-helm:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    env:
+      IMAGE_REPO_NAME: ${{ secrets.IMAGE_REPO_NAME }}
+      IMAGE_TAG: ${{ needs.build-and-push.outputs.IMAGE_TAG }}
+    steps:
+      # Step 1: Checkout Helm chart repo from main branch
+      - name: Checkout deployment repo
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ secrets.ARGO_REPO_NAME }}
+          ref: develop
+          token: ${{ secrets.REPO_TOKEN }}
+
+      # Step 2: Update Helm chart Image Tag to latest images tag.
+      - name: Update Helm chart with latest image
+        run: |
+          echo "Updating Helm chart..."
+          sed -i "s|^\s*repository: .*|  repository: $IMAGE_REPO_NAME|" helm-chart/values-gradle-dev.yaml
+          sed -i "s|^\s*tag: .*|  tag: $IMAGE_TAG|" helm-chart/values-gradle-dev.yaml
+          sed -i "s|^\s*repository: .*|  repository: $IMAGE_REPO_NAME|" helm-chart/values-gradle.yaml
+          sed -i "s|^\s*tag: .*|  tag: $IMAGE_TAG|" helm-chart/values-gradle.yaml
+          echo "Updated Helm chart:"
+          cat helm-chart/values-gradle-dev.yaml
+
+      # Step 3: Commit and push changes to develop branch.
+      # NOTE: Peer review must be completed before merging the changes to main branch.
+      - name: Commit updated Helm chart
+        uses: EndBug/add-and-commit@v9
+        with:
+          default_author: github_actor
+          message: "Update deployment image to ${{ env.IMAGE_TAG }}"
+          add: 'helm-chart/values-gradle-dev.yaml helm-chart/values-gradle.yaml'
+          new_branch: develop
